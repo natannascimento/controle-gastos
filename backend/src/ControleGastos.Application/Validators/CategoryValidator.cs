@@ -8,10 +8,10 @@ public class CategoryValidator : AbstractValidator<CategoryDto>
     public CategoryValidator()
     {
         RuleFor(x => x.Description)
-            .NotEmpty()
-            .MaximumLength(400);
+            .NotEmpty().WithMessage("A descrição é obrigatória.")
+            .MaximumLength(400).WithMessage("A descrição deve ter no máximo 400 caracteres.");
         RuleFor(x => x.Purpose)
-            .IsInEnum();       
+            .IsInEnum().WithMessage("Finalidade Invalida");       
     }
     
 }
