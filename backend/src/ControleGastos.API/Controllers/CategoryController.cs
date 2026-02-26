@@ -12,10 +12,18 @@ public class CategoryController(CategoryService service) : ControllerBase
     public async Task<IActionResult> Create(CategoryDto categoryDto)
     {
         var category = await service.CreateAsync(categoryDto);
-        return Created("", category);
+        return CreatedAtAction(nameof(GetAll), null, Map(category));
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
-        => Ok(await service.GetAllAsync());
+        => Ok((await service.GetAllAsync()).Select(Map));
+
+    private static CategoryResponseDto Map(ControleGastos.Domain.Entities.Category category)
+        => new()
+        {
+            Id = category.Id,
+            Description = category.Description,
+            Purpose = category.Purpose
+        };
 }

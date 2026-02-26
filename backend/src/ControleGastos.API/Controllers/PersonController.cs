@@ -8,34 +8,41 @@ namespace ControleGastos.API.Controllers;
 [Route("api/[controller]")]
 public class PersonController(PersonService personService) : ControllerBase
 {
-    private readonly PersonService _personService = personService;
-
     [HttpPost]
     public async Task<IActionResult> CreateAsync(PersonDto personDto)
     {
-        var personCreated = await _personService.CreateAsync(personDto);
-        return CreatedAtAction(nameof(GetById), new { id = personCreated.Id }, personCreated);
+        var personCreated = await personService.CreateAsync(personDto);
+        return CreatedAtAction(nameof(GetById), new { id = personCreated.Id }, Map(personCreated));
     }
     
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
-        => Ok(await _personService.GetByIdAsync(id));
+        => Ok(Map(await personService.GetByIdAsync(id)));
     
     [HttpGet]
     public async Task<IActionResult> GetAll()
-        => Ok(await _personService.GetAllAsync());
+        => Ok((await personService.GetAllAsync()).Select(Map));
     
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, PersonDto personDto)
     {
-        await _personService.UpdateAsync(id, personDto);
+        await personService.UpdateAsync(id, personDto);
         return NoContent();
     }
     
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        await _personService.DeleteAsync(id);
+        await personService.DeleteAsync(id);
         return NoContent();
     }
+
+    private static PersonResponseDto Map(ControleGastos.Domain.Entities.Person person)
+        => new()
+        {
+            Id = person.Id,
+            Name = person.Name,
+            BirthDate = person.BirthDate,
+            Age = person.Age
+        };
 }
