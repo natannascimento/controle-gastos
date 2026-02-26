@@ -19,12 +19,17 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<PersonService>();
 builder.Services.AddScoped<CategoryService>();
+builder.Services.AddScoped<TransactionService>();
+builder.Services.AddScoped<TotalsService>();
 builder.Services.AddScoped<IPersonRepository, PersonRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<IReportRepository, ReportRepository>();
 
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CategoryValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<PersonValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<TransactionValidator>();
 
 var app = builder.Build();
 
