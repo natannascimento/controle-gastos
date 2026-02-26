@@ -23,6 +23,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithOne(t => t.Person)
                 .HasForeignKey(t => t.PersonId)
                 .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.Property(p => p.BirthDate)
+                .IsRequired()
+                .HasColumnType("date");
         });
         
         modelBuilder.Entity<Transaction>(entity =>
@@ -31,10 +35,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             entity.Property(t => t.Description)
                 .IsRequired()
-                .HasMaxLength(200);
+                .HasMaxLength(400);
+
+            entity.Property(t => t.Date)
+                .IsRequired();
+            entity.Property(t => t.Date)
+                .HasColumnType("timestamp without time zone");
 
             entity.Property(t => t.Value)
-                .HasPrecision(18, 2)
+                .HasColumnType("decimal(18,2)")
+                .IsRequired();
+            
+            entity.Property(t => t.PersonId)
+                .IsRequired();
+            
+            entity.Property(t => t.CategoryId)
                 .IsRequired();
         });
         
@@ -49,6 +64,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(c => c.Purpose)
                 .IsRequired()
                 .HasConversion<int>();
+
+            entity.HasMany(c => c.Transactions)
+                .WithOne(t => t.Category)
+                .HasForeignKey(t => t.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
