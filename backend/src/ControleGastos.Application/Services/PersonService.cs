@@ -1,4 +1,6 @@
 using ControleGastos.Application.DTOs;
+using ControleGastos.Application.Errors;
+using ControleGastos.Application.Exceptions;
 using ControleGastos.Domain.Entities;
 using ControleGastos.Domain.Interfaces;
 
@@ -17,7 +19,7 @@ public class PersonService(IPersonRepository personRepository)
 
     public async Task<Person> GetByIdAsync(Guid id)
         => await personRepository.GetByIdAsync(id) 
-           ?? throw new Exception("Pessoa não encontrada.");
+           ?? throw new NotFoundException(BusinessErrorMessages.PersonNotFound);
     
     public async Task UpdateAsync(Guid id, PersonDto personDto)
     {

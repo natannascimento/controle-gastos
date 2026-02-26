@@ -37,6 +37,8 @@ builder.Services.AddValidatorsFromAssemblyContaining<TransactionValidator>();
 
 var app = builder.Build();
 
+app.UseMiddleware<ControleGastos.API.Middleware.ExceptionHandlingMiddleware>();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

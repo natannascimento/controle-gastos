@@ -1,4 +1,6 @@
 using ControleGastos.Application.DTOs;
+using ControleGastos.Application.Errors;
+using ControleGastos.Application.Exceptions;
 using ControleGastos.Domain.Entities;
 using ControleGastos.Domain.Enums;
 using ControleGastos.Domain.Interfaces;
@@ -17,21 +19,21 @@ public class TransactionService(IPersonRepository personRepository,
         // 3) Menor de idade só pode registrar despesa.
         // 4) Categoria deve ser compatível com o tipo (despesa/receita/ambas).
         if (createTransactionDto.Value <= 0)
-            throw new Exception("O valor da transação deve ser maior que zero.");
+            throw new BusinessRuleException(BusinessErrorMessages.TransactionValueMustBePositive);
 
         var person = await personRepository.GetByIdAsync(createTransactionDto.PersonId);
         if (person == null)
-            throw new Exception("Pessoa não encontrada.");
+            throw new NotFoundException(BusinessErrorMessages.PersonNotFound);
 
         var category = await categoryRepository.GetByIdAsync(createTransactionDto.CategoryId);
         if (category == null)
-            throw new Exception("Categoria não encontrada.");
+            throw new NotFoundException(BusinessErrorMessages.CategoryNotFound);
         
         if (person.Age < 18 && createTransactionDto.TransactionType == TransactionType.Income)
-            throw new Exception("Menores de idade só podem registrar despesas.");
+            throw new BusinessRuleException(BusinessErrorMessages.MinorCannotRegisterIncome);
         
         if (!ValidCategoryToTransactionType(category, createTransactionDto.TransactionType))
-            throw new Exception("Categoria incompatível com o tipo da transação.");
+            throw new BusinessRuleException(BusinessErrorMessages.CategoryIncompatibleWithTransactionType);
 
         var transaction = new Transaction(
             createTransactionDto.PersonId,
@@ -49,7 +51,7 @@ public class TransactionService(IPersonRepository personRepository,
 
     public async Task<Transaction> GetByIdAsync(Guid id)
         => await transactionRepository.GetByIdAsync(id)
-           ?? throw new Exception("Transação não encontrada.");
+           ?? throw new NotFoundException(BusinessErrorMessages.TransactionNotFound);
    
     
     public async Task<IEnumerable<Transaction>> GetAllAsync()
