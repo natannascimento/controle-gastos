@@ -1,9 +1,10 @@
 import { Routes, Route } from "react-router-dom";
+import { PeoplePage } from "./pages/people/PeoplePage";
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<h1>Home</h1>} />
+      <Route path="/" element={<PeoplePage />} />
     </Routes>
   );
 }
