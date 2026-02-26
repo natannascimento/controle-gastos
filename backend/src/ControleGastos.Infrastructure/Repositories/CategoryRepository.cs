@@ -19,4 +19,7 @@ public class CategoryRepository(AppDbContext context) : ICategoryRepository
     {
         return await context.Categories.ToListAsync();
     }
+    
+    public async Task<Category?> GetByIdAsync(Guid id)
+        => await context.Categories.FindAsync(id);
 }

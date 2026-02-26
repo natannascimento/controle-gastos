@@ -8,16 +8,13 @@ public class CategoryService(ICategoryRepository repository)
 {
     public async Task<Category> CreateAsync(CategoryDto dto)
     {
-        var category = new Category
-        {
-            Id = Guid.NewGuid(),
-            Description = dto.Description,
-            Purpose = dto.Purpose
-        };
-
+        var category = new Category(dto.Description, dto.Purpose);
         return await repository.CreateAsync(category);
     }
 
+    public async Task<Category> GetByIdAsync(Guid id)
+        => await repository.GetByIdAsync(id);
+    
     public async Task<IEnumerable<Category>> GetAllAsync()
         => await repository.GetAllAsync();
 }

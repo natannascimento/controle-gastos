@@ -10,6 +10,11 @@ public class PersonValidator : AbstractValidator<PersonDto>
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("O Nome é Obrigatório")
             .MaximumLength(200).WithMessage("O Nome deve ter no máximo 200 caracteres.");
+        
+        RuleFor(x => x.BirthDate)
+            .LessThan(DateTime.Today)
+            .WithMessage("A data de nascimento deve ser anterior à data atual.");
+        
     }
     
 }

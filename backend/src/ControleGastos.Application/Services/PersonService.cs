@@ -8,11 +8,7 @@ public class PersonService(IPersonRepository personRepository)
 {
     public async Task<Person> CreateAsync(PersonDto personDto )
     {
-        var personCreated = new Person
-        {
-            Id = Guid.NewGuid(),
-            Name = personDto.Name
-        };
+        var personCreated = new Person(personDto.Name, personDto.BirthDate);
         return await personRepository.CreateAsync(personCreated);
     }
     
@@ -21,12 +17,13 @@ public class PersonService(IPersonRepository personRepository)
 
     public async Task<Person> GetByIdAsync(Guid id)
         => await personRepository.GetByIdAsync(id) 
-           ?? throw new Exception("Person not found");
+           ?? throw new Exception("Pessoa não encontrada.");
     
     public async Task UpdateAsync(Guid id, PersonDto personDto)
     {
         var person = await GetByIdAsync(id);
-        person.Name = personDto.Name;
+        person.SetName(personDto.Name);
+        person.SetBirthDate(personDto.BirthDate);
 
         await personRepository.UpdateAsync(person);
     }
