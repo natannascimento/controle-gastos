@@ -10,12 +10,6 @@ function App() {
     <div>
       <nav className="app-nav">
         <NavLink
-          to="/reports"
-          className={({ isActive }) => (isActive ? "app-nav__link app-nav__link--active" : "app-nav__link")}
-        >
-          Relatórios
-        </NavLink>
-        <NavLink
           to="/transactions"
           className={({ isActive }) => (isActive ? "app-nav__link app-nav__link--active" : "app-nav__link")}
         >
@@ -32,6 +26,12 @@ function App() {
           className={({ isActive }) => (isActive ? "app-nav__link app-nav__link--active" : "app-nav__link")}
         >
           Categorias
+        </NavLink>
+        <NavLink
+          to="/reports"
+          className={({ isActive }) => (isActive ? "app-nav__link app-nav__link--active" : "app-nav__link")}
+        >
+          Relatórios
         </NavLink>
       </nav>
 
