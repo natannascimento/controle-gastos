@@ -1,12 +1,19 @@
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 import { PeoplePage } from "./pages/people/PeoplePage";
 import { CategoriesPage } from "./pages/categories/CategoriesPage";
+import { TransactionsPage } from "./pages/transactions/TransactionsPage";
 import "./App.css";
 
 function App() {
   return (
     <div>
       <nav className="app-nav">
+        <NavLink
+          to="/transactions"
+          className={({ isActive }) => (isActive ? "app-nav__link app-nav__link--active" : "app-nav__link")}
+        >
+          Transações
+        </NavLink>
         <NavLink
           to="/people"
           className={({ isActive }) => (isActive ? "app-nav__link app-nav__link--active" : "app-nav__link")}
@@ -22,7 +29,8 @@ function App() {
       </nav>
 
       <Routes>
-        <Route path="/" element={<Navigate to="/people" replace />} />
+        <Route path="/" element={<Navigate to="/transactions" replace />} />
+        <Route path="/transactions" element={<TransactionsPage />} />
         <Route path="/people" element={<PeoplePage />} />
         <Route path="/categories" element={<CategoriesPage />} />
       </Routes>

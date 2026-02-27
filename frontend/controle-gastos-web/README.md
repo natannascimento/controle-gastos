@@ -36,8 +36,11 @@ npm run dev
 - `src/services/apiClient.ts`: cliente HTTP base com `baseURL` centralizada.
 - `src/services/personService.ts`: operações de CRUD de Pessoa consumindo `/api/person`.
 - `src/services/categoryService.ts`: operações de criação e listagem de Categoria consumindo `/api/category`.
+- `src/services/transactionService.ts`: operações de criação e listagem de Transação consumindo `/api/transaction`.
 - `src/types/person.ts`: contratos de tipagem (`Person`, `PersonDto`).
 - `src/types/category.ts`: contratos de tipagem (`Category`, `CategoryDto`, `CategoryPurpose`).
+- `src/types/transaction.ts`: contratos de tipagem (`Transaction`, `CreateTransactionDto`, `TransactionType`).
+- `src/pages/transactions/TransactionsPage.tsx`: página principal do produto com criação e listagem de transações.
 - `src/pages/people/PeoplePage.tsx`: tela de listagem + formulário de criação/edição + exclusão.
 - `src/pages/categories/CategoriesPage.tsx`: tela de listagem + formulário de criação de categorias.
 
@@ -51,11 +54,17 @@ npm run dev
 - Cadastro de **Categoria**:
   - Criar
   - Listar
+- Cadastro de **Transação**:
+  - Criar
+  - Listar
 - Validação de formulário alinhada ao backend:
   - Nome obrigatório e máximo de 200 caracteres
   - Data de nascimento obrigatória e anterior à data atual
   - Descrição de categoria obrigatória e máximo de 400 caracteres
   - Finalidade de categoria obrigatória
+  - Valor de transação maior que zero
+  - Menor de idade pode registrar apenas despesa
+  - Categoria filtrada conforme o tipo da transação (despesa/receita/ambas)
 - Feedbacks de sucesso e erro em português.
 
 ## Observações de contrato
