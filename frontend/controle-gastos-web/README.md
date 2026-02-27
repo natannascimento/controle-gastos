@@ -35,8 +35,11 @@ npm run dev
 
 - `src/services/apiClient.ts`: cliente HTTP base com `baseURL` centralizada.
 - `src/services/personService.ts`: operações de CRUD de Pessoa consumindo `/api/person`.
+- `src/services/categoryService.ts`: operações de criação e listagem de Categoria consumindo `/api/category`.
 - `src/types/person.ts`: contratos de tipagem (`Person`, `PersonDto`).
+- `src/types/category.ts`: contratos de tipagem (`Category`, `CategoryDto`, `CategoryPurpose`).
 - `src/pages/people/PeoplePage.tsx`: tela de listagem + formulário de criação/edição + exclusão.
+- `src/pages/categories/CategoriesPage.tsx`: tela de listagem + formulário de criação de categorias.
 
 ## Funcionalidades já implementadas no frontend
 
@@ -45,9 +48,14 @@ npm run dev
   - Listar
   - Editar
   - Excluir
+- Cadastro de **Categoria**:
+  - Criar
+  - Listar
 - Validação de formulário alinhada ao backend:
   - Nome obrigatório e máximo de 200 caracteres
   - Data de nascimento obrigatória e anterior à data atual
+  - Descrição de categoria obrigatória e máximo de 400 caracteres
+  - Finalidade de categoria obrigatória
 - Feedbacks de sucesso e erro em português.
 
 ## Observações de contrato
