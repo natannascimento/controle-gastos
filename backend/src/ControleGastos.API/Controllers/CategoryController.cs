@@ -16,7 +16,7 @@ public class CategoryController(CategoryService service) : ControllerBase
         return CreatedAtAction(nameof(GetAll), null, Map(category));
     }
     
-    [HttpGet("{id:guid}")]
+    [HttpGet]
     public async Task<IActionResult> GetById(Guid id)
         => Ok(Map(await service.GetByIdAsync(id)));
 
