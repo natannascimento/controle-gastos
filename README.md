@@ -165,4 +165,3 @@ npm run build
 ## Observações
 
 - A documentação deste repositório foi centralizada neste arquivo para facilitar avaliação.
-- Os READMEs das subpastas apenas referenciam este documento.
