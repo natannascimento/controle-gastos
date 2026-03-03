@@ -6,6 +6,7 @@ using ControleGastos.Infrastructure.Repositories;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,8 +19,19 @@ builder.Services.AddControllers()
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+var baseConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var dbPassword = builder.Configuration["Database:Password"] ?? Environment.GetEnvironmentVariable("DB_PASSWORD");
+var connectionStringBuilder = new NpgsqlConnectionStringBuilder(baseConnectionString);
+
+if (!string.IsNullOrWhiteSpace(dbPassword))
+{
+    connectionStringBuilder.Password = dbPassword;
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionStringBuilder.ConnectionString));
 
 builder.Services.AddCors(options =>
 {
