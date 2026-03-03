@@ -1,3 +1,4 @@
+using ControleGastos.API.Errors;
 using ControleGastos.Application.Services;
 using ControleGastos.Application.Validators;
 using ControleGastos.Domain.Interfaces;
@@ -5,6 +6,7 @@ using ControleGastos.Infrastructure.Data;
 using ControleGastos.Infrastructure.Repositories;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
@@ -20,9 +22,15 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var baseConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-var dbPassword = builder.Configuration["Database:Password"] ?? Environment.GetEnvironmentVariable("DB_PASSWORD");
+var envConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+var configuredConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var baseConnectionString = !string.IsNullOrWhiteSpace(envConnectionString)
+    ? envConnectionString
+    : configuredConnectionString
+      ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+var dbPassword = builder.Configuration["Database:Password"]
+    ?? Environment.GetEnvironmentVariable("DB_PASSWORD");
 var connectionStringBuilder = new NpgsqlConnectionStringBuilder(baseConnectionString);
 
 if (!string.IsNullOrWhiteSpace(dbPassword))
@@ -56,6 +64,29 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CategoryValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<PersonValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<TransactionValidator>();
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(x => x.Value?.Errors.Count > 0)
+            .ToDictionary(
+                x => x.Key,
+                x => x.Value!.Errors
+                    .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? "Valor invalido." : e.ErrorMessage)
+                    .Distinct()
+                    .ToArray());
+
+        var response = new ErrorEnvelope
+        {
+            Type = "validation_error",
+            Message = "Dados invalidos.",
+            Errors = errors
+        };
+
+        return new BadRequestObjectResult(response);
+    };
+});
 
 var app = builder.Build();
 

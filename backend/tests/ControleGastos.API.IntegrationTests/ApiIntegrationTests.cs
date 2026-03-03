@@ -43,10 +43,12 @@ public class ApiIntegrationTests
         var response = await client.GetAsync($"/api/person/{Guid.NewGuid()}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("application/json", response.Content.Headers.ContentType?.MediaType);
 
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal(BusinessErrorMessages.PersonNotFound, body.GetProperty("title").GetString());
+        Assert.Equal("not_found", body.GetProperty("type").GetString());
+        Assert.Equal(BusinessErrorMessages.PersonNotFound, body.GetProperty("message").GetString());
+        Assert.Empty(body.GetProperty("errors").EnumerateObject());
     }
 
     [Fact]
@@ -69,10 +71,34 @@ public class ApiIntegrationTests
         });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("application/json", response.Content.Headers.ContentType?.MediaType);
 
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal(BusinessErrorMessages.MinorCannotRegisterIncome, body.GetProperty("title").GetString());
+        Assert.Equal("business_rule", body.GetProperty("type").GetString());
+        Assert.Equal(BusinessErrorMessages.MinorCannotRegisterIncome, body.GetProperty("message").GetString());
+        Assert.Empty(body.GetProperty("errors").EnumerateObject());
+    }
+
+    [Fact]
+    public async Task CategoryCreate_ShouldReturnValidationEnvelope_WhenDescriptionIsInvalid()
+    {
+        using var factory = new IntegrationTestWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/category", new
+        {
+            description = "",
+            purpose = 1
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/json", response.Content.Headers.ContentType?.MediaType);
+
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("validation_error", body.GetProperty("type").GetString());
+        Assert.Equal("Dados invalidos.", body.GetProperty("message").GetString());
+        Assert.True(body.GetProperty("errors").TryGetProperty("Description", out var fieldErrors));
+        Assert.True(fieldErrors.GetArrayLength() > 0);
     }
 
     [Fact]

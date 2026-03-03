@@ -1,0 +1,8 @@
+src/ControleGastos.API/appsettings.Development.json
+
+**/bin/
+**/obj/
+TestResults/
+coverage/
+*.coverage
+*.coveragexml

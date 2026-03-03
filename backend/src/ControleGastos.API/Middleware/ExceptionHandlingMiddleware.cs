@@ -1,5 +1,6 @@
+using ControleGastos.API.Errors;
 using ControleGastos.Application.Exceptions;
-using Microsoft.AspNetCore.Mvc;
+using FluentValidation;
 
 namespace ControleGastos.API.Middleware;
 
@@ -11,33 +12,63 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         {
             await next(context);
         }
+        catch (ValidationException ex)
+        {
+            var errors = ex.Errors
+                .GroupBy(x => x.PropertyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(x => x.ErrorMessage).Distinct().ToArray());
+
+            await WriteEnvelopeAsync(
+                context,
+                StatusCodes.Status400BadRequest,
+                "validation_error",
+                "Dados invalidos.",
+                errors);
+        }
         catch (NotFoundException ex)
         {
-            await WriteProblemDetailsAsync(context, StatusCodes.Status404NotFound, ex.Message);
+            await WriteEnvelopeAsync(
+                context,
+                StatusCodes.Status404NotFound,
+                "not_found",
+                ex.Message);
         }
         catch (BusinessRuleException ex)
         {
-            await WriteProblemDetailsAsync(context, StatusCodes.Status400BadRequest, ex.Message);
+            await WriteEnvelopeAsync(
+                context,
+                StatusCodes.Status400BadRequest,
+                "business_rule",
+                ex.Message);
         }
         catch (Exception)
         {
-            await WriteProblemDetailsAsync(
+            await WriteEnvelopeAsync(
                 context,
                 StatusCodes.Status500InternalServerError,
+                "unexpected_error",
                 "Erro inesperado.");
         }
     }
 
-    private static async Task WriteProblemDetailsAsync(HttpContext context, int statusCode, string message)
+    private static async Task WriteEnvelopeAsync(
+        HttpContext context,
+        int statusCode,
+        string type,
+        string message,
+        IDictionary<string, string[]>? errors = null)
     {
         context.Response.StatusCode = statusCode;
 
-        var problem = new ProblemDetails
+        var envelope = new ErrorEnvelope
         {
-            Status = statusCode,
-            Title = message
+            Type = type,
+            Message = message,
+            Errors = errors ?? new Dictionary<string, string[]>()
         };
 
-        await context.Response.WriteAsJsonAsync(problem, options: null, contentType: "application/problem+json");
+        await context.Response.WriteAsJsonAsync(envelope);
     }
 }
