@@ -31,7 +31,6 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
     private static async Task WriteProblemDetailsAsync(HttpContext context, int statusCode, string message)
     {
         context.Response.StatusCode = statusCode;
-        context.Response.ContentType = "application/problem+json";
 
         var problem = new ProblemDetails
         {
@@ -39,6 +38,6 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
             Title = message
         };
 
-        await context.Response.WriteAsJsonAsync(problem);
+        await context.Response.WriteAsJsonAsync(problem, options: null, contentType: "application/problem+json");
     }
 }
