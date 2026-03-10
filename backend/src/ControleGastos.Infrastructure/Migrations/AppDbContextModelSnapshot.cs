@@ -3,7 +3,6 @@ using System;
 using ControleGastos.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -48,7 +47,7 @@ namespace ControleGastos.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("BirthDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("date");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -58,6 +57,39 @@ namespace ControleGastos.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("People");
+                });
+
+            modelBuilder.Entity("ControleGastos.Domain.Entities.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("ControleGastos.Domain.Entities.Transaction", b =>
@@ -70,7 +102,7 @@ namespace ControleGastos.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("Date")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -95,6 +127,69 @@ namespace ControleGastos.Infrastructure.Migrations
                     b.ToTable("Transactions");
                 });
 
+            modelBuilder.Entity("ControleGastos.Domain.Entities.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AuthProvider")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<string>("GoogleSub")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid?>("PersonId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("GoogleSub")
+                        .IsUnique()
+                        .HasFilter("\"GoogleSub\" IS NOT NULL");
+
+                    b.HasIndex("PersonId")
+                        .IsUnique()
+                        .HasFilter("\"PersonId\" IS NOT NULL");
+
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("ControleGastos.Domain.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("ControleGastos.Domain.Entities.User", "User")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ControleGastos.Domain.Entities.Transaction", b =>
                 {
                     b.HasOne("ControleGastos.Domain.Entities.Category", "Category")
@@ -114,6 +209,18 @@ namespace ControleGastos.Infrastructure.Migrations
                     b.Navigation("Person");
                 });
 
+            modelBuilder.Entity("ControleGastos.Domain.Entities.User", b =>
+                {
+                    b.HasOne("ControleGastos.Domain.Entities.Person", "Person")
+                        .WithOne("User")
+                        .HasForeignKey("ControleGastos.Domain.Entities.User", "PersonId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Person");
+
+                    b.Navigation("RefreshTokens");
+                });
+
             modelBuilder.Entity("ControleGastos.Domain.Entities.Category", b =>
                 {
                     b.Navigation("Transactions");
@@ -122,6 +229,8 @@ namespace ControleGastos.Infrastructure.Migrations
             modelBuilder.Entity("ControleGastos.Domain.Entities.Person", b =>
                 {
                     b.Navigation("Transactions");
+
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }
