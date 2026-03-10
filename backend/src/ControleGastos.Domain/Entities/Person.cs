@@ -7,6 +7,7 @@ public class Person
     public DateTime BirthDate { get; private set; }
 
     public int Age => CalculateAge();
+    public User? User { get; private set; }
 
     private readonly List<Transaction> _transactions = [];
     public IReadOnlyCollection<Transaction> Transactions => _transactions;

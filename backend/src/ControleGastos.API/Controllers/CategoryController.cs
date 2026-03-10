@@ -1,5 +1,6 @@
 using ControleGastos.Application.DTOs;
 using ControleGastos.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ControleGastos.Domain.Entities;
 
@@ -7,6 +8,7 @@ namespace ControleGastos.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class CategoryController(CategoryService service) : ControllerBase
 {
     [HttpPost]

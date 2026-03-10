@@ -8,6 +8,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Person> People { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
     public DbSet<Category> Categories { get; set; }
+    public DbSet<User> Users { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -27,6 +29,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(p => p.BirthDate)
                 .IsRequired()
                 .HasColumnType("date");
+
+            entity.HasOne(p => p.User)
+                .WithOne(u => u.Person)
+                .HasForeignKey<User>(u => u.PersonId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
         
         modelBuilder.Entity<Transaction>(entity =>
@@ -69,6 +76,76 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithOne(t => t.Category)
                 .HasForeignKey(t => t.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(u => u.Id);
+
+            entity.Property(u => u.Email)
+                .IsRequired()
+                .HasMaxLength(320);
+
+            entity.HasIndex(u => u.Email)
+                .IsUnique();
+
+            entity.Property(u => u.Name)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            entity.Property(u => u.AuthProvider)
+                .IsRequired()
+                .HasConversion<int>();
+
+            entity.Property(u => u.GoogleSub)
+                .HasMaxLength(200);
+
+            entity.HasIndex(u => u.GoogleSub)
+                .IsUnique()
+                .HasFilter("\"GoogleSub\" IS NOT NULL");
+
+            entity.Property(u => u.PasswordHash)
+                .HasMaxLength(500);
+
+            entity.HasIndex(u => u.PersonId)
+                .IsUnique()
+                .HasFilter("\"PersonId\" IS NOT NULL");
+
+            entity.Property(u => u.CreatedAt)
+                .IsRequired()
+                .HasColumnType("timestamp without time zone");
+
+            entity.Property(u => u.UpdatedAt)
+                .IsRequired()
+                .HasColumnType("timestamp without time zone");
+        });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(rt => rt.Id);
+
+            entity.Property(rt => rt.TokenHash)
+                .IsRequired()
+                .HasMaxLength(128);
+
+            entity.HasIndex(rt => rt.TokenHash)
+                .IsUnique();
+
+            entity.Property(rt => rt.ExpiresAt)
+                .IsRequired()
+                .HasColumnType("timestamp without time zone");
+
+            entity.Property(rt => rt.CreatedAt)
+                .IsRequired()
+                .HasColumnType("timestamp without time zone");
+
+            entity.Property(rt => rt.RevokedAt)
+                .HasColumnType("timestamp without time zone");
+
+            entity.HasOne(rt => rt.User)
+                .WithMany(u => u.RefreshTokens)
+                .HasForeignKey(rt => rt.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

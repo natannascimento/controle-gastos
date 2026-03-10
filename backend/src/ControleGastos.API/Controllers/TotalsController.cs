@@ -1,10 +1,12 @@
 using ControleGastos.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ControleGastos.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class TotalsController(TotalsService totalsService) : ControllerBase
 {
     [HttpGet("persons")]
