@@ -113,11 +113,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             entity.Property(u => u.CreatedAt)
                 .IsRequired()
-                .HasColumnType("timestamp without time zone");
+                .HasColumnType("timestamp with time zone");
 
             entity.Property(u => u.UpdatedAt)
                 .IsRequired()
-                .HasColumnType("timestamp without time zone");
+                .HasColumnType("timestamp with time zone");
         });
 
         modelBuilder.Entity<RefreshToken>(entity =>
@@ -133,14 +133,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             entity.Property(rt => rt.ExpiresAt)
                 .IsRequired()
-                .HasColumnType("timestamp without time zone");
+                .HasColumnType("timestamp with time zone");
 
             entity.Property(rt => rt.CreatedAt)
                 .IsRequired()
-                .HasColumnType("timestamp without time zone");
+                .HasColumnType("timestamp with time zone");
 
             entity.Property(rt => rt.RevokedAt)
-                .HasColumnType("timestamp without time zone");
+                .HasColumnType("timestamp with time zone");
 
             entity.HasOne(rt => rt.User)
                 .WithMany(u => u.RefreshTokens)
