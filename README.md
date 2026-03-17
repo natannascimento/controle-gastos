@@ -1,167 +1,447 @@
-# Controle de Gastos Residenciais
+# Controle de Gastos — Aplicação Full-Stack
 
-Sistema full stack para controle de gastos, separado em **Web API (.NET)** e **Frontend (React + TypeScript)**, conforme os requisitos do teste técnico.
+Um aplicativo web completo para **gerenciamento de finanças pessoais** com foco em rastreamento de receitas, despesas, categorias e geração de relatórios consolidados.
 
-## Objetivo
+## 📋 Visão Geral
 
-Permitir o gerenciamento de:
+**Controle de Gastos** permite que usuários:
+- **Gerenciem pessoas** — registre múltiplos usuários com data de nascimento
+- **Categorizem transações** — crie categorias de receita, despesa ou ambas
+- **Registrem transações** — adicione receitas e despesas com descrição, valor, data e categoria
+- **Visualizem relatórios** — consulte totalizações por pessoa e por categoria em tempo real
 
-- Pessoas
-- Categorias
-- Transações
-- Consultas de totais
+### Stack Tecnológico
 
-Com aplicação das regras de negócio do domínio financeiro residencial.
+| Componente | Tecnologia |
+|-----------|-----------|
+| **Frontend** | React 19 + TypeScript + Vite + Axios + React Router |
+| **Backend** | .NET 8 + ASP.NET Core + Entity Framework Core + FluentValidation |
+| **Banco de Dados** | PostgreSQL 15 |
+| **Deploy** | Docker + Docker Compose (Oracle Cloud Always Free) |
+| **Linting** | ESLint 9 + typescript-eslint |
 
-## Arquitetura
+## 📁 Arquitetura do Projeto
 
-- `backend/`: API REST em C#/.NET com EF Core e PostgreSQL.
-- `frontend/controle-gastos-web/`: aplicação React (Vite + TypeScript).
-
-Estrutura macro:
-
-```text
-controle-gastos/
-  backend/
-    src/
-      ControleGastos.API/
-      ControleGastos.Application/
-      ControleGastos.Domain/
-      ControleGastos.Infrastructure/
-  frontend/
-    controle-gastos-web/
 ```
+controle-gastos/
+├── backend/                          # API .NET 8
+│   ├── src/
+│   │   ├── ControleGastos.API/      # Controllers, middleware, Program.cs
+│   │   ├── ControleGastos.Application/  # Serviços, DTOs, validadores
+│   │   ├── ControleGastos.Domain/   # Entidades, enums, interfaces
+│   │   └── ControleGastos.Infrastructure/ # EF Core, migrações, repositórios
+│   ├── tests/                        # Projetos de testes
+│   ├── ControleGastos.sln           # Solution file
+│   ├── Dockerfile                    # Multi-stage build para .NET
+│   └── PROJECT_CONTEXT.md           # Documentação técnica detalhada
+│
+├── frontend/                         # SPA React + TypeScript
+│   ├── controle-gastos-web/
+│   │   ├── src/
+│   │   │   ├── pages/               # Telas: People, Categories, Transactions, Reports
+│   │   │   ├── services/            # Camada HTTP (Axios + apiClient)
+│   │   │   ├── types/               # DTOs TypeScript
+│   │   │   ├── auth/                # Contexto de autenticação
+│   │   │   ├── utils/               # Utilitários (extractApiErrorMessage, etc)
+│   │   │   └── App.tsx              # Rotas e navegação principal
+│   │   ├── Dockerfile               # Multi-stage build (Node + Nginx)
+│   │   ├── nginx.conf               # Configuração Nginx para SPA
+│   │   ├── package.json             # Dependências
+│   │   ├── vite.config.ts           # Configuração Vite
+│   │   └── tsconfig.json            # Configuração TypeScript
+│   └── PROJECT_CONTEXT.md           # Documentação técnica detalhada
+│
+├── docker-compose.yml               # Orquestração de containers
+├── .env.example                     # Template de variáveis de ambiente
+├── README.md                        # Este arquivo
+└── PROJECT_CONTEXT.md              # Documentação geral
 
-## Tecnologias
+## 🚀 Quick Start — Desenvolvimento Local
 
-### Backend
+### Pré-requisitos
 
-- .NET 8
-- ASP.NET Core Web API
-- Entity Framework Core
-- PostgreSQL
-- FluentValidation
+- Node.js 18+ (frontend)
+- .NET 8 SDK (backend)
+- PostgreSQL 15+ (ou use Docker)
+- Docker + Docker Compose (recomendado)
 
-### Frontend
+### Setup com Docker Compose (Recomendado)
 
-- React 19
-- TypeScript
-- Vite
-- Axios
-- React Router
+1. **Clonar repositório:**
+   ```bash
+   git clone <url-repo>
+   cd controle-gastos
+   ```
 
-## Regras de negócio implementadas
+2. **Criar arquivo `.env` (raiz do projeto):**
+   ```env
+   # Database
+   DB_PASSWORD=postgres_dev_password
+   CONNECTION_STRING=postgresql://postgres:postgres_dev_password@db:5432/controle_gastos?sslmode=disable
 
-- Pessoa:
-  - identificação automática (`Guid`)
-  - nome obrigatório, máximo de 200 caracteres
-  - uso de `BirthDate` para cálculo de idade dinâmico
-  - exclusão em cascata das transações ao remover pessoa
+   # JWT
+   JWT_SECRET=seu_jwt_secret_aqui_com_no_minimo_32_caracteres
 
-- Categoria:
-  - identificação automática (`Guid`)
-  - descrição obrigatória, máximo de 400 caracteres
-  - finalidade: despesa, receita ou ambas
+   # Frontend
+   VITE_API_BASE_URL=http://localhost:5034/api
+   ```
 
-- Transação:
-  - identificação automática (`Guid`)
-  - descrição obrigatória, máximo de 400 caracteres
-  - valor > 0
-  - pessoa e categoria obrigatórias e válidas
-  - menor de idade só pode registrar despesa
-  - categoria precisa ser compatível com o tipo da transação
+3. **Iniciar containers:**
+   ```bash
+   docker-compose up -d
+   ```
 
-- Totais:
-  - totais por pessoa e resumo geral
-  - totais por categoria e resumo geral
+4. **Acessar aplicação:**
+   - Frontend: `http://localhost:5173` (Vite dev server)
+   - Backend API: `http://localhost:5034/api`
+   - Swagger Docs: `http://localhost:5034/swagger`
+   - PostgreSQL: `localhost:5432`
 
-## Funcionalidades do frontend
+5. **Parar containers:**
+   ```bash
+   docker-compose down
+   ```
 
-- Transações (página principal): criação e listagem
-- Pessoas: criação, listagem, edição e exclusão
-- Categorias: criação e listagem
+### Setup Local (Sem Docker)
 
-Padrões adotados:
-
-- métodos e propriedades técnicas em inglês (alinhado ao backend)
-- textos exibidos ao usuário em português
-
-## Como executar o projeto
-
-## Pré-requisitos
-
-- .NET SDK 8
-- Node.js 20+
-- PostgreSQL
-
-## 1) Subir backend
-
-1. Configure a connection string em:
-   - `backend/src/ControleGastos.API/appsettings.json`
-   - chave: `ConnectionStrings:DefaultConnection`
-
-2. Aplique as migrations:
+#### Backend
 
 ```bash
 cd backend
+
+# Restaurar dependências
+dotnet restore
+
+# Aplicar migrations (certifique-se de que PostgreSQL está rodando)
 dotnet ef database update --project src/ControleGastos.Infrastructure --startup-project src/ControleGastos.API
-```
 
-3. Execute a API:
+# Executar testes
+dotnet test
 
-```bash
+# Rodar em desenvolvimento
 dotnet run --project src/ControleGastos.API
 ```
 
-A API roda nas URLs do `launchSettings.json` (ex.: `http://localhost:5034`).
-Swagger disponível em `/swagger`.
+Backend estará disponível em `http://localhost:5034`.
 
-## 2) Subir frontend
-
-1. Instale dependências:
+#### Frontend
 
 ```bash
 cd frontend/controle-gastos-web
+
+# Instalar dependências
 npm install
-```
 
-2. Configure a URL da API (opcional). Padrão: `http://localhost:5034/api`.
-
-Crie um `.env` em `frontend/controle-gastos-web`:
-
-```env
-VITE_API_BASE_URL=http://localhost:5034/api
-```
-
-3. Execute:
-
-```bash
+# Executar em desenvolvimento (com hot reload)
 npm run dev
-```
 
-## Scripts úteis (frontend)
-
-```bash
+# Executar linting
 npm run lint
+
+# Build para produção
 npm run build
 ```
 
-## Endpoints principais
+Frontend estará disponível em `http://localhost:5173`.
 
-- `POST /api/person`
-- `GET /api/person`
-- `PUT /api/person/{id}`
-- `DELETE /api/person/{id}`
+## 🔌 API REST — Endpoints Principais
 
-- `POST /api/category`
-- `GET /api/category`
+### Pessoas (`/api/person`)
+- `GET /person` — listar todas as pessoas
+- `GET /person/{id}` — obter pessoa específica  
+- `POST /person` — criar nova pessoa
+- `PUT /person/{id}` — atualizar pessoa
+- `DELETE /person/{id}` — deletar pessoa (cascata: remove transações)
 
-- `POST /api/transaction`
-- `GET /api/transaction`
+### Categorias (`/api/category`)
+- `GET /category` — listar categorias
+- `GET /category/{id}` — obter categoria
+- `POST /category` — criar categoria
 
-- `GET /api/totals/persons`
-- `GET /api/totals/categories`
+### Transações (`/api/transaction`)
+- `GET /transaction` — listar transações
+- `GET /transaction/{id}` — obter transação
+- `POST /transaction` — criar transação
 
-## Observações
+### Relatórios (`/api/totals`)
+- `GET /totals/persons` — totalizações por pessoa
+- `GET /totals/categories` — totalizações por categoria
 
-- A documentação deste repositório foi centralizada neste arquivo para facilitar avaliação.
+## 📋 Regras de Negócio Implementadas
+
+### Pessoas
+- Nome obrigatório (máx. 200 caracteres)
+- Data de nascimento obrigatória (não pode ser no futuro)
+- Cálculo de idade automático em tempo real
+- Exclusão em cascata: ao remover pessoa, todas suas transações também são removidas
+
+### Categorias
+- Descrição obrigatória (máx. 400 caracteres)
+- Finalidade obrigatória: 
+  - `Expense` (1) — apenas despesas
+  - `Income` (2) — apenas receitas
+  - `Both` (3) — receitas e despesas
+
+### Transações
+- Pessoa, categoria, descrição, valor e data obrigatórios
+- Valor deve ser maior que zero
+- Tipo obrigatório: `Expense` (1) ou `Income` (2)
+- **Restrição:** menores de idade (< 18 anos) não podem registrar receitas
+- Categorias filtradas por compatibilidade com tipo de transação
+- Data persistida sem informação de timezone (compatível com PostgreSQL)
+
+## 🛠️ Funcionalidades Frontend
+
+- **Pessoas:** criar, listar, editar e deletar usuários
+- **Categorias:** criar e listar categorias (edição aguardando)
+- **Transações:** criar e listar transações (edição/exclusão aguardando)
+- **Relatórios:** visualizar totalizações consolidadas por pessoa e categoria
+- **Validação:** regras de negócio reforçadas no cliente (UX melhorada)
+- **Tratamento de Erros:** normalização de mensagens de erro em `extractApiErrorMessage`
+- **Responsividade:** layout adaptativo para mobile/tablet
+
+## 🔐 Autenticação e Segurança
+
+**Status Atual:** Autenticação via JWT Bearer Token está **em planejamento**.
+
+**Implementação Planejada:**
+- Login com e-mail/senha
+- OAuth 2.0 com Google (infraestrutura pronta no backend)
+- Refresh tokens com TTL configurável  
+- Tokens tipados por usuário
+- ProtectedRoute no frontend para controle de acesso
+
+**Variáveis de Ambiente Necessárias:**
+```env
+Auth__Jwt__Secret=seu_jwt_secret_minimo_32_caracteres
+Auth__Jwt__AccessTokenMinutes=15
+Auth__Jwt__RefreshTokenDays=7
+Auth__Google__ClientId=seu_google_client_id
+```
+
+## 📱 UX e Design
+
+- Layout centralizado (`max-width: 980px`) com cartões brancos
+- Navegação superior em abas com estado ativo destacado
+- Formulários lineares com feedback de erro/sucesso
+- Tabelas com scroll horizontal em telas pequenas
+- Breakpoints responsivos para mobile/tablet
+- Formatação monetária em pt-BR com moeda BRL
+
+## 🧪 Testes
+
+### Backend
+```bash
+cd backend
+
+# Rodar todos os testes
+dotnet test
+
+# Rodar com cobertura
+dotnet test /p:CollectCoverage=true
+
+# Rodar teste específico
+dotnet test --filter "Category~TestName"
+```
+
+**Cobertura Atual:** ~43 testes
+- Domain: validações de entidade
+- Application: regras de negócio
+- API Integration: fluxos end-to-end
+- Validators: FluentValidation
+
+### Frontend
+```bash
+cd frontend/controle-gastos-web
+
+# ESLint
+npm run lint
+
+# Build (verifica erros TypeScript)
+npm run build
+
+# Preview da build
+npm run preview
+```
+
+## 🐳 Deploy em Produção
+
+### Oracle Cloud Always Free
+
+Consulte o guia completo em [DEPLOY_ORACLE_CLOUD.md](./DEPLOY_ORACLE_CLOUD.md) (em planejamento) para:
+
+- Provisionar VM Ubuntu (1 OCPU, 1GB RAM) e Autonomous Database PostgreSQL (20GB) — **gratuito**
+- Configurar Docker, Nginx e HTTPS com Let's Encrypt
+- Executar migrations em produção
+- Monitorar aplicação e banco de dados
+
+**Resumo Rápido:**
+```bash
+# Na VM Oracle Cloud
+git clone <repo>
+cd controle-gastos
+
+# Configurar .env
+VITE_API_BASE_URL=https://seu_dominio.com/api
+CONNECTION_STRING=postgresql://postgres:senha@host:5432/controle_gastos
+
+# Build e deploy
+docker-compose build
+docker-compose up -d
+
+# Executar migrations
+docker-compose exec api dotnet ef database update --project ControleGastos.Infrastructure
+```
+
+### Variáveis de Ambiente em Produção
+
+```env
+# API
+ASPNETCORE_ENVIRONMENT=Production
+ConnectionStrings__DefaultConnection=postgresql://postgres:password@host:5432/controle_gastos
+
+# JWT
+Auth__Jwt__Secret=seu_jwt_secret_minimo_32_caracteres
+Auth__Jwt__AccessTokenMinutes=60
+Auth__Jwt__RefreshTokenDays=30
+
+# Frontend
+VITE_API_BASE_URL=https://seu_dominio.com/api
+
+# Database
+DB_PASSWORD=sua_senha_segura
+```
+
+## 📚 Documentação Técnica Detalhada
+
+- **[backend/PROJECT_CONTEXT.md](./backend/PROJECT_CONTEXT.md)** — Domain model, API contract, configuração, migrations
+- **[frontend/PROJECT_CONTEXT.md](./frontend/PROJECT_CONTEXT.md)** — Stack, rotas, serviços HTTP, tipagem completa
+
+## 📊 Estrutura de Dados (Domain Model)
+
+### Person
+```csharp
+{
+  id: UUID,
+  name: string (1-200 chars),
+  birthDate: date,
+  age: int (calculado em runtime)
+}
+```
+
+### Category
+```csharp
+{
+  id: UUID,
+  description: string (1-400 chars),
+  purpose: int (1=Expense, 2=Income, 3=Both)
+}
+```
+
+### Transaction
+```csharp
+{
+  id: UUID,
+  personId: UUID,
+  categoryId: UUID,
+  description: string (1-400 chars),
+  value: decimal(18,2),
+  date: date,
+  type: int (1=Expense, 2=Income)
+}
+```
+
+### Report Summary
+```csharp
+{
+  totalIncome: decimal,
+  totalExpense: decimal,
+  balance: decimal
+}
+```
+
+## ✅ Checklist: Pronto para Produção?
+
+- [ ] Autenticação JWT implementada e testada
+- [ ] HTTPS configurado (Let's Encrypt em Oracle Cloud)
+- [ ] Migrations de banco executadas
+- [ ] Variáveis de ambiente configuradas em produção
+- [ ] CORS ajustado para domínio de produção
+- [ ] Testes de carga e segurança
+- [ ] Backup automático configurado (Autonomous DB)
+- [ ] Monitoramento e logs centralizados
+- [ ] CI/CD pipeline (GitHub Actions/GitLab)
+- [ ] Swagger protegido ou desabilitado em produção
+
+## 🚦 Limitações e Gaps Conhecidos
+
+- ❌ Autenticação/autorização (fase de planejamento)
+- ❌ Edição/exclusão de categorias (apenas CRUD parcial)
+- ❌ Edição/exclusão de transações (apenas leitura)
+- ❌ Paginação nas listagens
+- ❌ Filtros avançados (busca, período, etc)
+- ❌ Cache compartilhado entre telas (estado local por página)
+- ❌ Testes E2E automatizados
+- ❌ Internacionalização i18n (hardcoded pt-BR)
+- ⚠️ Swagger desabilitado em produção (considerar habilitar com restrições)
+
+## 🚀 Próximas Prioridades
+
+1. **Autenticação JWT** — Implementar login/logout e proteção de rotas
+2. **Deploy Oracle Cloud** — Provisionar infraestrutura e publicar live
+3. **Testes E2E** — Adicionar testes com Cypress/Playwright
+4. **Edição de Transações** — Permitir editar/deletar transações existentes
+5. **Paginação** — Suporte a pagination nas listagens
+6. **Filtros Avançados** — Busca, período, categoria e tipo
+7. **Observabilidade** — Logs estruturados, métricas e rastreamento
+
+## 🤝 Contribuindo
+
+1. Faça uma branch: `git checkout -b feature/nova-feature`
+2. Commit suas mudanças: `git commit -am 'Descrição clara da mudança'`
+3. Push para a branch: `git push origin feature/nova-feature`
+4. Abra um Pull Request
+5. Certifique-se de:
+   - Passar em ESLint/TypeScript (frontend): `npm run lint`
+   - Passar em testes (backend): `dotnet test`
+   - Build sem erros: `npm run build` (frontend) e `dotnet build` (backend)
+
+## 🐛 Debugging e Logs
+
+### Backend
+```bash
+# Logs detalhados durante desenvolvimento
+ASPNETCORE_ENVIRONMENT=Development dotnet run --project src/ControleGastos.API
+
+# Logs em arquivo real-time (Docker)
+docker-compose logs -f api
+
+# Logs do banco de dados
+docker-compose logs -f db
+```
+
+### Frontend
+```bash
+# Console do navegador (F12) mostra requisições HTTP
+# Logs customizados em src/services/apiClient.ts:
+const DEBUG = true;  // Ativa logs de requisições
+```
+
+## 📞 Suporte
+
+- **Issues:** Abra uma issue no repositório
+- **Documentação API:** Swagger em `/swagger` (apenas em desenvolvimento)
+- **Contato:** [seu-email@example.com]
+
+## 📄 Licença
+
+MIT License
+
+---
+
+**Última atualização:** 17 de março de 2026
+
+**Stack resumido:**
+- **Backend:** .NET 8 + ASP.NET Core + EF Core + PostgreSQL
+- **Frontend:** React 19 + TypeScript + Vite + Axios
+- **Deploy:** Docker Compose + Oracle Cloud Always Free (planejado)
