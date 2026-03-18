@@ -202,21 +202,49 @@ Frontend estará disponível em `http://localhost:5173`.
 
 ## 🔐 Autenticação e Segurança
 
-**Status Atual:** Autenticação via JWT Bearer Token está **em planejamento**.
+**Status:** ✅ **Implementado** — JWT + OAuth Google + Refresh Tokens com cookies HttpOnly
 
-**Implementação Planejada:**
-- Login com e-mail/senha
-- OAuth 2.0 com Google (infraestrutura pronta no backend)
-- Refresh tokens com TTL configurável  
-- Tokens tipados por usuário
-- ProtectedRoute no frontend para controle de acesso
+### Recursos Implementados
 
-**Variáveis de Ambiente Necessárias:**
+#### Login/Registro (Frontend)
+- Email/senha com validação
+- OAuth 2.0 com Google (Sign in with Google button)
+- Link automático de conta Google com email existente
+- Formulário em `/auth` (página pública)
+
+#### Backend Auth Flow
+- `POST /api/auth/register` — criar conta novo
+- `POST /api/auth/login` — login email+senha
+- `POST /api/auth/google` — login via Google OAuth
+- `POST /api/auth/refresh` — renovar token expirado
+- `POST /api/auth/logout` — logout + revoga refresh token
+- `GET /api/users/me` — retorna usuário autenticado
+
+#### Segurança
+- ✅ **JWT** (HS256) armazenado em memória (React state)
+- ✅ **RefreshToken** em **cookie HttpOnly** (previne XSS)
+- ✅ **Password** com PBKDF2 hash (nunca texto plano)
+- ✅ **Token Refresh** automático (interceptador Axios)
+- ✅ **CORS** com credenciais apenas de `http://localhost:5173`
+- ✅ **Revogação** de tokens possível (RevokedAt na DB)
+- ✅ **Email normalizado** (trim, lowercase)
+- ✅ **SameSite=Lax** nas cookies (anti-CSRF)
+
+#### Rotas Protegidas
+- `/reports` — Apenas autenticados
+- `/transactions` — Apenas autenticados
+- `/people` — Apenas autenticados
+- `/categories` — Apenas autenticados
+- `/auth` — Apenas não autenticados (redireciona se logado)
+
+**Token Expiration:** Access token 15min, Refresh token 7 dias
+
+### Variáveis de Ambiente
 ```env
 Auth__Jwt__Secret=seu_jwt_secret_minimo_32_caracteres
 Auth__Jwt__AccessTokenMinutes=15
 Auth__Jwt__RefreshTokenDays=7
-Auth__Google__ClientId=seu_google_client_id
+Auth__Google__ClientId=seu_google_client_id.apps.googleusercontent.com
 ```
 
 ## 📱 UX e Design
@@ -362,11 +390,13 @@ DB_PASSWORD=sua_senha_segura
 
 ## ✅ Checklist: Pronto para Produção?
 
-- [ ] Autenticação JWT implementada e testada
+- [x] Autenticação JWT + Google OAuth implementada
+- [x] Rotas protegidas com refresh token automático
 - [ ] HTTPS configurado (Let's Encrypt em Oracle Cloud)
 - [ ] Migrations de banco executadas
 - [ ] Variáveis de ambiente configuradas em produção
 - [ ] CORS ajustado para domínio de produção
+- [ ] Google OAuth Client ID obtido do console Google
 - [ ] Testes de carga e segurança
 - [ ] Backup automático configurado (Autonomous DB)
 - [ ] Monitoramento e logs centralizados
@@ -375,8 +405,7 @@ DB_PASSWORD=sua_senha_segura
 
 ## 🚦 Limitações e Gaps Conhecidos
 
-- ❌ Autenticação/autorização (fase de planejamento)
-- ❌ Edição/exclusão de categorias (apenas CRUD parcial)
+- ❌ Edição/exclusão de categorias (apenas CRUD parcial, não há PUT/DELETE)
 - ❌ Edição/exclusão de transações (apenas leitura)
 - ❌ Paginação nas listagens
 - ❌ Filtros avançados (busca, período, etc)
@@ -387,7 +416,7 @@ DB_PASSWORD=sua_senha_segura
 
 ## 🚀 Próximas Prioridades
 
-1. **Autenticação JWT** — Implementar login/logout e proteção de rotas
+1. ✅ **Autenticação JWT** — ~~Implementar login/logout e proteção de rotas~~ (CONCLUÍDO)
 2. **Deploy Oracle Cloud** — Provisionar infraestrutura e publicar live
 3. **Testes E2E** — Adicionar testes com Cypress/Playwright
 4. **Edição de Transações** — Permitir editar/deletar transações existentes

@@ -37,7 +37,30 @@ git clone <seu-repo-url>
 cd controle-gastos
 ```
 
-### Passo 2: Criar Arquivo `.env`
+### Passo 2: Configurar Google OAuth (Opcional)
+
+Se você quer testar login via Google:
+
+1. Vá para [Google Cloud Console](https://console.cloud.google.com/)
+2. Crie um novo projeto (ex: "Controle de Gastos Dev")
+3. Habilite a API do Google Identity
+4. Vá para "Oauth consent screen" → configure consentimento
+5. Vá para "Credentials" → crie "OAuth 2.0 Client ID"
+   - Type: Web application
+   - Authorized redirect URIs: `http://localhost:5173`, `http://localhost:5034`
+6. Copie o **Client ID**
+7. Edite `backend/src/ControleGastos.API/appsettings.Development.json` e adicione:
+   ```json
+   "Auth": {
+     "Google": {
+       "ClientId": "seu_client_id_aqui.apps.googleusercontent.com"
+     }
+   }
+   ```
+
+**Nota:** Sem essas configurações, o botão "Sign in with Google" estará visível mas não funcionará.
+
+### Passo 3: Criar Arquivo `.env`
 
 Na **raiz do projeto** (mesma pasta que `docker-compose.yml`), crie um arquivo `.env`:
 
@@ -46,19 +69,21 @@ Na **raiz do projeto** (mesma pasta que `docker-compose.yml`), crie um arquivo `
 DB_PASSWORD=postgres_dev_password
 CONNECTION_STRING=postgresql://postgres:postgres_dev_password@db:5432/controle_gastos?sslmode=disable
 
-# ===== JWT (Autenticação — futuro) =====
+# ===== JWT (Autenticação) =====
 JWT_SECRET=sua_chave_secreta_aqui_com_no_minimo_32_caracteres
 
 # ===== FRONTEND =====
 VITE_API_BASE_URL=http://localhost:5034/api
+VITE_GOOGLE_CLIENT_ID=seu_client_id_aqui.apps.googleusercontent.com
 ```
 
 **Notas importantes:**
 - `DB_PASSWORD`: pode ser qualquer coisa em dev (exemplo: `postgres_dev_password`)
 - `JWT_SECRET`: deve ter mínimo 32 caracteres
 - `CONNECTION_STRING`: formato PostgreSQL com sslmode=disable (seguro em dev)
+- `VITE_GOOGLE_CLIENT_ID`: mesmo valor do appsettings.Development.json (opcional)
 
-### Passo 3: Iniciar Containers
+### Passo 4: Iniciar Containers
 
 ```bash
 # Build e inicie os containers
@@ -73,9 +98,7 @@ Você deve ver 3 containers:
 - `controle-gastos-api-1` (Backend .NET) — status: `running`
 - `controle-gastos-web-1` (Frontend React + Nginx) — status: `running`
 
-### Passo 4: Acessar Aplicação
-
-Abra no navegador:
+### Passo 5: Acessar Aplicação
 
 | Componente | URL | Descrição |
 |-----------|-----|-----------|
@@ -84,7 +107,33 @@ Abra no navegador:
 | **Swagger Docs** | `http://localhost:5034/swagger` | Documentação interativa da API |
 | **PostgreSQL** | `localhost:5432` | Banco de dados (host:port) |
 
-### Passo 5: Parar Containers (quando terminar)
+### Passo 6: Testar Autenticação
+
+1. **Abra http://localhost:5173** — você será redirecionado para `/auth` (página de login)
+
+2. **Registrar novo usuário:**
+   - Clique em "Criar conta"
+   - Preencha: email, senha (mín 8 chars, maiúscula, número, símbolo) e data de nascimento
+   - Clique "Registrar"
+   - Você será redirecionado automaticamente para `/reports`
+
+3. **Testar login:**
+   - Clique "Logout" no topo
+   - Use email + senha para fazer login
+   - Verifique que as transações anteriores estão lá
+
+4. **Testar Google OAuth (se configurado):**
+   - Na página de login (`/auth`), clique "Sign in with Google"
+   - Google popup aparece, faça login
+   - Você será redirecionado para `/reports`
+
+5. **Verificar token no console:**
+   - Abra DevTools (F12) → Console/Network
+   - Requisições à API terão `Authorization: Bearer <token>` header
+   - Cookie `cg_refresh` será enviado automaticamente
+   - Ao expirar (15min), será renovado automaticamente
+
+### Passo 7: Parar Containers (quando terminar)
 
 ```bash
 # Parar containers (mantém dados do banco)
@@ -93,8 +142,6 @@ docker-compose down
 # Remover tudo (inclui volume do banco)
 docker-compose down -v
 ```
-
----
 
 ## 🛠️ Setup Local (Sem Docker)
 
@@ -216,7 +263,32 @@ VITE_API_BASE_URL=http://localhost:5034/api
 
 **Padrão:** Se não criar `.env`, o frontend usa `http://localhost:5034/api`.
 
-#### Passo 4: Executar Frontend
+#### Passo 4: Configurar Google OAuth (Opcional)
+
+Se você quer testar login via Google (mesmo processo que Docker):
+
+1. Vá para [Google Cloud Console](https://console.cloud.google.com/)
+2. Crie um novo projeto (ex: "Controle de Gastos Dev")
+3. Habilite a API do Google Identity
+4. Vá para "Oauth consent screen" → configure consentimento
+5. Vá para "Credentials" → crie "OAuth 2.0 Client ID"
+   - Type: Web application
+   - Authorized redirect URIs: `http://localhost:5173`, `http://localhost:5034`
+6. Copie o **Client ID**
+7. Edite `backend/src/ControleGastos.API/appsettings.Development.json` e adicione:
+   ```json
+   "Auth": {
+     "Google": {
+       "ClientId": "seu_client_id_aqui.apps.googleusercontent.com"
+     }
+   }
+   ```
+8. Crie `.env` no `frontend/controle-gastos-web/`:
+   ```env
+   VITE_GOOGLE_CLIENT_ID=seu_client_id_aqui.apps.googleusercontent.com
+   ```
+
+#### Passo 5: Executar Frontend
 
 ```bash
 npm run dev
@@ -232,13 +304,14 @@ Output esperado:
 
 Frontend agora está em `http://localhost:5173`.
 
-#### Passo 5: Abrir no Navegador
+#### Passo 6: Testar Autenticação Local
 
-Abra `http://localhost:5173` e você deve ver a aplicação carregada.
+Siga o mesmo processo da seção Docker (Passo 6 acima):
+1. Abra http://localhost:5173
+2. Registre novo usuário ou faça login
+3. Verifique token e cookies no console
 
 ---
-
-## ✅ Testes de Conexão
 
 ### Testar Backend Manualmente
 

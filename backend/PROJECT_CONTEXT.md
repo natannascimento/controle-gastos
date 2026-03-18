@@ -14,6 +14,24 @@ The project is structured by layers:
 
 ## 2. Domain Model
 
+### User
+- Fields: `Id`, `Email`, `PasswordHash`, `GoogleSub`, `AuthProvider`, `PersonId`
+- Derived field: `Person` (relacionamento 1:1)
+- AuthProvider enum: `Email = 1`, `Google = 2`
+- Rules in entity:
+  - Email obrigatório e único (normalized)
+  - PasswordHash requerido (nunca null, até para Google)
+  - GoogleSub único (se Google)
+  - PersonId requerido (criada automaticamente no login)
+
+### RefreshToken
+- Fields: `Id`, `UserId`, `TokenHash`, `ExpiresAt`, `RevokedAt`
+- Rules:
+  - TokenHash é SHA256 (nunca raw token armazenado)
+  - ExpiresAt: DateTime em UTC
+  - RevokedAt: null=ativo, DateTime=revogado
+  - Method: `IsActive(nowUtc)` verifica ativo e não expirado
+
 ### Person
 
 - Fields: `Id`, `Name`, `BirthDate`.
@@ -60,6 +78,32 @@ Error messages are centralized in `BusinessErrorMessages`.
 
 ## 4. API Surface
 
+### Authentication (`/api/auth`)
+- `POST /auth/register` — registrar novo usuário
+  - Body: `{ email, password, name, birthDate }`
+  - Response: `{ accessToken, expiresIn, user }`
+- `POST /auth/login` — login com email/senha
+  - Body: `{ email, password }`
+  - Response: `{ accessToken, expiresIn, user }`
+  - Cookie: `cg_refresh` (HttpOnly, Secure, SameSite=Lax)
+- `POST /auth/google` — login com Google OAuth
+  - Body: `{ idToken }`
+  - Response: `{ accessToken, expiresIn, user }`
+  - Cookie: `cg_refresh` (HttpOnly)
+- `POST /auth/refresh` — renovar token
+  - Body: empty (usa cookie)
+  - Response: `{ accessToken, expiresIn, user }`
+  - Cookie: novo `cg_refresh`
+- `POST /auth/logout` — logout e revoga refresh
+  - [Authorize] — requer JWT
+  - Response: 204 No Content
+  - Cookie: `cg_refresh` deletado
+
+### Users (`/api/users`)
+- `GET /users/me` — retorna usuário autenticado
+  - [Authorize] — requer JWT
+  - Response: `{ id, email, name, authProvider, personId }`
+
 ### Person
 
 - `POST /api/person`
@@ -89,6 +133,16 @@ Error messages are centralized in `BusinessErrorMessages`.
 
 Validation uses `FluentValidation` for input DTOs:
 
+- `RegisterValidator` — registrar novo usuário
+  - Email: não vazio, formato email, máx 200 chars
+  - Password: mín 8 chars, pelo menos 1 maiúscula, 1 número, 1 símbolo
+  - Name: não vazio, máx 200 chars
+  - BirthDate: data válida, não no futuro
+- `LoginValidator` — login
+  - Email: não vazio, formato email
+  - Password: não vazio
+- `GoogleLoginValidator` — Google OAuth
+  - IdToken: não vazio
 - `PersonValidator`
 - `CategoryValidator`
 - `TransactionValidator`
@@ -139,17 +193,45 @@ Migrations are present in `src/ControleGastos.Infrastructure/Migrations`.
 
 ## 8. Configuration and Secrets
 
+### Connection String
 Connection strategy in `Program.cs`:
 
 1. Prefer environment variable `ConnectionStrings__DefaultConnection`.
 2. Fallback to config `ConnectionStrings:DefaultConnection`.
 3. If available, apply password from `Database:Password` or `DB_PASSWORD`.
 
-Secret handling:
+### JWT Configuration
+Em `appsettings.json` → `Auth:Jwt`:
+- `Secret` — chave para HS256 (mín 32 chars)
+- `Issuer` — validação de emissor
+- `Audience` — validação de audiência
+- `AccessTokenMinutes` — duração JWT (default: 15)
+- `RefreshTokenDays` — duracao refresh (default: 7)
+
+Em `Program.cs`:
+```csharp
+TokenValidationParameters:
+  - ValidIssuer
+  - ValidAudience
+  - ValidateIssuerSigningKey
+  - ValidateLifetime
+  - ClockSkew: 30 segundos (tolerância)
+```
+
+### Google OAuth Configuration
+Em `appsettings.json` → `Auth:Google`:
+- `ClientId` — ID do cliente Google (obtido em console.cloud.google.com)
+
+Validação:
+- Prod: Valida assinatura com Google API
+- Testes: Fake validator (para testes sem chamar Google)
+
+### Secret Handling
 
 - Local secret should be placed in `src/ControleGastos.API/appsettings.Development.json`.
 - Example file: `src/ControleGastos.API/appsettings.Development.example.json`.
 - Local development config file is git-ignored.
+- **Produção:** Use Azure Key Vault, Secrets Manager, ou variáveis de ambiente
 
 ## 9. Runtime Notes
 
@@ -180,6 +262,11 @@ Current test volume is approximately 43 test cases.
 1. Person model keeps `BirthDate` as source of truth.
 2. `Age` is calculated at runtime (not persisted as dedicated DB field).
 3. API error payload is standardized with custom envelope.
+4. **JWT armazenado em memória** (React state) — melhor Performance
+5. **RefreshToken em cookie HttpOnly** — proteção XSS
+6. **Email normalizado** (trim, lowercase) — evita duplicatas
+7. **PasswordHash com PBKDF2** — strong hashing
+8. **Person criada automaticamente** — ao fazer login/registro
 
 ## 12. Deploy em Produção
 

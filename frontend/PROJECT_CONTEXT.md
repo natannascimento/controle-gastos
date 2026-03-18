@@ -82,7 +82,55 @@ Em `src/services/apiClient.ts`:
 Implicação prática:
 - Para ambientes diferentes (dev/homolog/prod), usar `.env` com `VITE_API_BASE_URL`.
 
-## 7) Contratos de domínio (TypeScript)
+## 7) Autenticação (TypeScript)
+
+### AuthProvider Enum
+```ts
+enum AuthProvider {
+  Email = 1,
+  Google = 2
+}
+```
+
+### Tipos de Auth
+```ts
+// User autenticado
+AuthUser {
+  id: string (UUID)
+  email: string
+  name: string
+  authProvider: AuthProvider
+  personId: string (UUID)
+}
+
+// Response após login
+AuthResponse {
+  accessToken: string (JWT)
+  expiresIn: number (segundos, ex: 900)
+  user: AuthUser
+}
+
+// Request login
+LoginRequest {
+  email: string
+  password: string
+}
+
+// Request registro
+RegisterRequest {
+  email: string
+  password: string
+  name: string
+  birthDate: date
+}
+
+// Request Google login
+GoogleLoginRequest {
+  idToken: string (JWT do Google)
+}
+```
+
+## 7.1) Contratos de domínio (TypeScript)
 
 ## Pessoas
 - `Person`: `{ id, name, birthDate, age }`
@@ -109,6 +157,14 @@ Implicação prática:
 - `CategoryTotalsResponse`: `{ items: CategoryTotalsItem[], summary }`
 
 ## 8) Endpoints consumidos
+
+### Autenticação (`authService.ts`) — **NOVO**
+- `POST /auth/register` — registrar novo usuário
+- `POST /auth/login` → retorna `{ accessToken, expiresIn, user }`
+- `POST /auth/google` — login com Google (envia idToken)
+- `POST /auth/refresh` — renovar token (via cookie automaticamente)
+- `POST /auth/logout` — logout e revoga refresh token
+- `GET /users/me` — retorna usuário autenticado (requer token)
 
 ### Pessoas (`personService.ts`)
 - `GET /person` → listar pessoas.
@@ -210,9 +266,50 @@ Dependências implícitas de contrato:
 - Backend envia `age` em `Person` (cálculo de menoridade depende disso no frontend).
 - Backend precisa aceitar data de transação no formato `YYYY-MM-DDT00:00:00`.
 
-## 15) Limitações/gaps atuais (importante para IA)
+## 15) Autenticação e Autorização
 
-- Não há autenticação/autorização no frontend.
+### AuthContext.tsx
+- **State**: `{ accessToken, user, status, error }`
+- **Status**: `"loading" | "authenticated" | "unauthenticated"`
+- **Métodos**:
+  - `login(email, password)` — login com email/senha
+  - `loginWithGoogle(idToken)` — login via Google OAuth
+  - `logout()` — logout e revoga refresh token
+  - `refreshSession()` — renova JWT via refresh token
+
+### ProtectedRoute.tsx
+- Verifica `authStatus`
+- Loading → exibe "Carregando sessão..."
+- Unauthenticated → redireciona para `/auth`
+- Authenticated → renderiza conteúdo
+
+### useAuth Hook
+- Exporta: `{ accessToken, user, status, isAuthenticated, login, loginWithGoogle, logout }`
+- Usado em componentes para acessar contexto
+
+### AuthPage.tsx
+- Formulário de login (email + senha)
+- Google Sign In button
+- Link para criar conta (registro)
+- Redirect automático se já autenticado
+
+### Interceptador Axios (apiClient.ts)
+- Adiciona `Authorization: Bearer {token}` em requisições
+- Captura 401 → auto-refresh via POST /auth/refresh
+- Bloqueia múltiplas requisições refresh simultâneas
+- Redireciona para `/auth` se refresh falhar
+
+### Jornada de Dados
+1. User faz login em `/auth`
+2. POST /api/auth/login {email, password}
+3. Backend retorna JWT + cookie refresh (HttpOnly)
+4. Frontend armazena JWT em state
+5. Próximas requisições: Axios adiciona Bearer header
+6. Quando expira: auto-refresh e retenta
+7. Em logout: revoga token + limpa state
+
+## 15.1) Limitações/gaps atuais (importante para IA)
+
 - Não há testes automatizados (unitário/integrado/E2E) no código atual.
 - Não há paginação/filtros avançados nas listagens.
 - Não há edição/exclusão para categorias e transações (apenas criação/listagem).
